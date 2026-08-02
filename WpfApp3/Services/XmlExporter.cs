@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Xml.Linq;
-using System;
+using System.Xml;
 using WpfApp3.Models;
-using System.IO;
 
 namespace WpfApp3.Services
 {
@@ -13,27 +11,40 @@ namespace WpfApp3.Services
     {
         /// <summary>
         /// Сохраняет перечисление Person в XML-файл по указанному пути.
+        /// Использует потоковую запись для работы с большими объёмами данных.
         /// </summary>
         /// <param name="data">Данные для экспорта.</param>
         /// <param name="filePath">Путь к выходному файлу.</param>
         public void Export(IEnumerable<Person> data, string filePath)
         {
-            var xml = new XElement("Persons",
-                new XElement("Records",
-                    from person in data
-                    select new XElement("Person",
-                        new XElement("Id", person.Id),
-                        new XElement("Date", person.Date.ToString("yyyy-MM-dd")),
-                        new XElement("FirstName", person.FirstName ?? string.Empty),
-                        new XElement("LastName", person.LastName ?? string.Empty),
-                        new XElement("MiddleName", person.MiddleName ?? string.Empty),
-                        new XElement("City", person.City ?? string.Empty),
-                        new XElement("Country", person.Country ?? string.Empty)
-                    )
-                )
-            );
+            var settings = new XmlWriterSettings
+            {
+                Indent = true,
+                IndentChars = "  "
+            };
 
-            xml.Save(filePath);
+            using var writer = XmlWriter.Create(filePath, settings);
+            writer.WriteStartDocument();
+            writer.WriteStartElement("Persons");
+            writer.WriteStartElement("Records");
+
+            foreach (var person in data)
+            {
+                writer.WriteStartElement("Person");
+                writer.WriteElementString("Id", person.Id.ToString());
+                writer.WriteElementString("Date", person.Date.ToString("yyyy-MM-dd"));
+                writer.WriteElementString("FirstName", person.FirstName ?? string.Empty);
+                writer.WriteElementString("LastName", person.LastName ?? string.Empty);
+                writer.WriteElementString("MiddleName", person.MiddleName ?? string.Empty);
+                writer.WriteElementString("City", person.City ?? string.Empty);
+                writer.WriteElementString("Country", person.Country ?? string.Empty);
+                writer.WriteEndElement(); // Person
+            }
+
+            writer.WriteEndElement(); // Records
+            writer.WriteEndElement(); // Persons
+            writer.WriteEndDocument();
+            writer.Flush();
         }
     }
 }

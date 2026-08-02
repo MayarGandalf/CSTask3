@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using EFCore.BulkExtensions;
+using Microsoft.EntityFrameworkCore;
 using WpfApp3.Data;
 using WpfApp3.Models;
 
@@ -27,7 +28,7 @@ namespace WpfApp3.Services
         /// <returns>Список Person.</returns>
         public List<Person> GetPaged(int skip, int take, FilterCriteria criteria)
         {
-            using (var context = new DbContext())
+            using (var context = new ProjectDbContext())
             {
                 var query = BuildFilteredQuery(context.Persons, criteria);
                 return query.OrderBy(person => person.Id).Skip(skip).Take(take).ToList();
@@ -41,10 +42,28 @@ namespace WpfApp3.Services
         /// <returns>Количество записей.</returns>
         public int GetTotalCount(FilterCriteria criteria)
         {
-            using (var context = new DbContext())
+            using (var context = new ProjectDbContext())
             {
                 var query = BuildFilteredQuery(context.Persons, criteria);
                 return query.Count();
+            }
+        }
+
+        /// <summary>
+        /// Возвращает все записи, удовлетворяющие критериям (без пагинации) в виде потока.
+        /// Данные читаются из БД порциями, без загрузки всего набора в память.
+        /// </summary>
+        /// <param name="criteria">Критерии фильтрации.</param>
+        /// <returns>Поток объектов Person.</returns>
+        public IEnumerable<Person> GetFilteredStream(FilterCriteria criteria)
+        {
+            using var context = new ProjectDbContext();
+            // Отключаем отслеживание для снижения нагрузки на память и ускорения
+            var query = BuildFilteredQuery(context.Persons.AsNoTracking(), criteria);
+            query = query.OrderBy(person => person.Id);
+            foreach (var person in query.AsEnumerable())
+            {
+                yield return person;
             }
         }
 
@@ -53,9 +72,10 @@ namespace WpfApp3.Services
         /// </summary>
         /// <param name="criteria">Критерии фильтрации.</param>
         /// <returns>Список Person.</returns>
+        [Obsolete("Используйте GetFilteredStream для потоковой обработки больших объёмов данных.")]
         public List<Person> GetAllFiltered(FilterCriteria criteria)
         {
-            using (var context = new DbContext())
+            using (var context = new ProjectDbContext())
             {
                 var query = BuildFilteredQuery(context.Persons, criteria);
                 return query.OrderBy(person => person.Id).ToList();
@@ -112,7 +132,7 @@ namespace WpfApp3.Services
         {
             if (_bulkBuffer.Count == 0) return;
 
-            using (var context = new DbContext())
+            using (var context = new ProjectDbContext())
             {
                 var config = new BulkConfig
                 {
@@ -133,7 +153,7 @@ namespace WpfApp3.Services
         /// <returns>Задача, представляющая асинхронную операцию.</returns>
         public async Task SaveAsync(IEnumerable<Person> persons)
         {
-            using (var context = new DbContext())
+            using (var context = new ProjectDbContext())
             {
                 var config = new BulkConfig { SetOutputIdentity = false };
                 await context.BulkInsertAsync(persons.ToList(), config).ConfigureAwait(false);

@@ -6,7 +6,7 @@ namespace WpfApp3.Data
     /// <summary>
     /// Контекст базы данных Entity Framework Core для работы с сущностью Person.
     /// </summary>
-    public class DbContext : Microsoft.EntityFrameworkCore.DbContext
+    public class ProjectDbContext : Microsoft.EntityFrameworkCore.DbContext
     {
         /// <summary>
         /// Набор сущностей Person, представляющий таблицу Persons.

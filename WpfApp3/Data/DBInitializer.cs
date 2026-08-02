@@ -25,7 +25,7 @@ namespace WpfApp3.Data
                     command.ExecuteNonQuery();
                 }
             }
-            using (var context = new DbContext())
+            using (var context = new ProjectDbContext())
             {
                 context.Database.EnsureCreated();
 

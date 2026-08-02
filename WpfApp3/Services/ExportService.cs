@@ -23,22 +23,31 @@ namespace WpfApp3.Services
 
         /// <summary>
         /// Асинхронно экспортирует данные, отфильтрованные по критериям, с помощью переданного действия.
+        /// Данные передаются потоково, без загрузки всего набора в память.
         /// </summary>
         /// <param name="criteria">Критерии фильтрации.</param>
         /// <param name="filePath">Путь к файлу для экспорта.</param>
-        /// <param name="exportAction">Действие, выполняющее фактическую запись данных в файл.</param>
+        /// <param name="exportAction">Действие, выполняющее фактическую запись данных в файл (принимает IEnumerable&lt;Person&gt;).</param>
         /// <returns>Кортеж: количество экспортированных записей и сообщение об ошибке (null, если успешно).</returns>
-        public async Task<(int count, string? error)> ExportAsync(FilterCriteria criteria, string filePath, Action<List<Person>, string> exportAction)
+        public async Task<(int count, string? error)> ExportAsync(
+            FilterCriteria criteria,
+            string filePath,
+            Action<IEnumerable<Person>, string> exportAction)
         {
             try
             {
-                var data = await Task.Run(() => _repository.GetAllFiltered(criteria));
-
-                if (data.Count == 0)
+                // Быстрый подсчёт общего количества записей (без загрузки данных)
+                var totalCount = _repository.GetTotalCount(criteria);
+                if (totalCount == 0)
                     return (0, "Нет данных для экспорта с выбранными фильтрами.");
 
-                await Task.Run(() => exportAction(data, filePath));
-                return (data.Count, null);
+                // Получаем потоковый перечислитель данных
+                var dataStream = _repository.GetFilteredStream(criteria);
+
+                // Экспортируем в фоновом потоке
+                await Task.Run(() => exportAction(dataStream, filePath));
+
+                return (totalCount, null);
             }
             catch (Exception exception)
             {

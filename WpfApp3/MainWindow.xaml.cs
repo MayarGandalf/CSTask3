@@ -187,11 +187,12 @@ namespace WpfApp3
 
         /// <summary>
         /// Обобщённый метод экспорта данных с выбором файла и вызовом переданного действия.
+        /// Теперь принимает Action&lt;IEnumerable&lt;Person&gt;, string&gt; для потоковой обработки.
         /// </summary>
         /// <param name="extension">Расширение файла.</param>
         /// <param name="filterDescription">Описание фильтра для диалога сохранения.</param>
-        /// <param name="exportAction">Действие экспорта, принимающее данные и путь.</param>
-        private async void ExportData(string extension, string filterDescription, Action<List<Person>, string> exportAction)
+        /// <param name="exportAction">Действие экспорта, принимающее поток данных и путь.</param>
+        private async void ExportData(string extension, string filterDescription, Action<IEnumerable<Person>, string> exportAction)
         {
             var saveDialog = new SaveFileDialog
             {
@@ -219,7 +220,7 @@ namespace WpfApp3
             }
         }
 
-        private void BtnExportExcel_Click(object sender, RoutedEventArgs e) => ExportData("xlsx", "Excel files", (data, path) => _excelExporter.Export(data, path));
-        private void BtnExportXml_Click(object sender, RoutedEventArgs e) => ExportData("xml", "XML files", (data, path) => _xmlExporter.Export(data, path));
+        private void BtnExportExcel_Click(object sender, RoutedEventArgs e) => ExportData("xlsx", "Excel files", _excelExporter.Export);
+        private void BtnExportXml_Click(object sender, RoutedEventArgs e) => ExportData("xml", "XML files", _xmlExporter.Export);
     }
 }
