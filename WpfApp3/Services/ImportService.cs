@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using WpfApp3.Models;
+using WpfApp3.Helpers; // добавлено
 
 namespace WpfApp3.Services
 {
@@ -32,16 +33,26 @@ namespace WpfApp3.Services
         /// <returns>Кортеж: количество импортированных записей и сообщение об ошибке (null при успехе).</returns>
         public async Task<(int count, string? error)> ImportAsync(string filePath)
         {
+            Logger.Info($"Начало импорта из {filePath}"); // добавлено
+
             try
             {
                 int totalCount = 0;
+                int skippedCount = 0;
                 await foreach (var person in _csvImporter.ImportAsync(filePath).ConfigureAwait(false))
                 {
+                    if (person == null)
+                    {
+                        skippedCount++;
+                        continue;
+                    }
                     await _repository.AddForBulkAsync(person).ConfigureAwait(false);
                     totalCount++;
                 }
 
                 await _repository.FlushBulkAsync().ConfigureAwait(false);
+
+                Logger.Info($"Импорт завершён. Загружено {totalCount} записей, пропущено {skippedCount}.");
 
                 if (totalCount == 0)
                     return (0, "Не найдено корректных данных.");
@@ -50,6 +61,7 @@ namespace WpfApp3.Services
             }
             catch (Exception ex)
             {
+                Logger.Error(ex, "Ошибка импорта"); 
                 return (0, $"Ошибка импорта: {ex.Message}");
             }
         }

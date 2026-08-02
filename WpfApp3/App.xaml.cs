@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using WpfApp3.Data;
+using WpfApp3.Helpers; // добавлено
 
 namespace WpfApp3
 {
@@ -21,9 +22,11 @@ namespace WpfApp3
             try
             {
                 DBInitializer.Initialize();
+                Logger.Info("База данных инициализирована успешно."); // добавлено
             }
             catch (Exception ex)
             {
+                Logger.Error(ex, "Ошибка инициализации БД"); // добавлено
                 MessageBox.Show($"Ошибка инициализации БД:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 Environment.Exit(1);
             }

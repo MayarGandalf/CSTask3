@@ -1,11 +1,12 @@
-﻿using System;
+﻿using EFCore.BulkExtensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using EFCore.BulkExtensions;
-using Microsoft.EntityFrameworkCore;
 using WpfApp3.Data;
+using WpfApp3.Helpers;
 using WpfApp3.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace WpfApp3.Services
 {
@@ -58,27 +59,11 @@ namespace WpfApp3.Services
         public IEnumerable<Person> GetFilteredStream(FilterCriteria criteria)
         {
             using var context = new ProjectDbContext();
-            // Отключаем отслеживание для снижения нагрузки на память и ускорения
             var query = BuildFilteredQuery(context.Persons.AsNoTracking(), criteria);
             query = query.OrderBy(person => person.Id);
             foreach (var person in query.AsEnumerable())
             {
                 yield return person;
-            }
-        }
-
-        /// <summary>
-        /// Возвращает все записи, удовлетворяющие критериям (без пагинации).
-        /// </summary>
-        /// <param name="criteria">Критерии фильтрации.</param>
-        /// <returns>Список Person.</returns>
-        [Obsolete("Используйте GetFilteredStream для потоковой обработки больших объёмов данных.")]
-        public List<Person> GetAllFiltered(FilterCriteria criteria)
-        {
-            using (var context = new ProjectDbContext())
-            {
-                var query = BuildFilteredQuery(context.Persons, criteria);
-                return query.OrderBy(person => person.Id).ToList();
             }
         }
 
@@ -134,15 +119,23 @@ namespace WpfApp3.Services
 
             using (var context = new ProjectDbContext())
             {
-                var config = new BulkConfig
+                try
                 {
-                    SetOutputIdentity = false,   // не возвращать сгенерированные Id (ускоряет)
-                    PreserveInsertOrder = false,
-                    UseTempDB = false,
-                    BatchSize = _batchSize
-                };
-                await context.BulkInsertAsync(_bulkBuffer, config).ConfigureAwait(false);
-                _bulkBuffer.Clear();
+                    var config = new BulkConfig
+                    {
+                        SetOutputIdentity = false,   // не возвращать сгенерированные Id (ускоряет)
+                        PreserveInsertOrder = false,
+                        UseTempDB = false,
+                        BatchSize = _batchSize
+                    };
+                    await context.BulkInsertAsync(_bulkBuffer, config).ConfigureAwait(false);
+                    _bulkBuffer.Clear();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "Ошибка массовой вставки"); // добавлено
+                    throw;
+                }
             }
         }
 

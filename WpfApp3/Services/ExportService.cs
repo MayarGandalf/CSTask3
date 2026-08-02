@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WpfApp3.Models;
+using WpfApp3.Helpers; // добавлено
 
 namespace WpfApp3.Services
 {
@@ -34,23 +35,26 @@ namespace WpfApp3.Services
             string filePath,
             Action<IEnumerable<Person>, string> exportAction)
         {
+            Logger.Info($"Начало экспорта в {filePath}");
+
             try
             {
-                // Быстрый подсчёт общего количества записей (без загрузки данных)
                 var totalCount = _repository.GetTotalCount(criteria);
                 if (totalCount == 0)
+                {
+                    Logger.Warning($"Нет данных для экспорта по заданным фильтрам."); 
                     return (0, "Нет данных для экспорта с выбранными фильтрами.");
+                }
 
-                // Получаем потоковый перечислитель данных
                 var dataStream = _repository.GetFilteredStream(criteria);
-
-                // Экспортируем в фоновом потоке
                 await Task.Run(() => exportAction(dataStream, filePath));
 
+                Logger.Info($"Экспорт завершён. Экспортировано {totalCount} записей.");
                 return (totalCount, null);
             }
             catch (Exception exception)
             {
+                Logger.Error(exception, "Ошибка экспорта");
                 return (0, $"Ошибка экспорта: {exception.Message}");
             }
         }

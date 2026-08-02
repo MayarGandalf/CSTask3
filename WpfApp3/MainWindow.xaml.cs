@@ -5,6 +5,7 @@ using System.Windows;
 using Microsoft.Win32;
 using WpfApp3.Models;
 using WpfApp3.Services;
+using WpfApp3.Helpers; // добавлено
 
 namespace WpfApp3
 {
@@ -69,6 +70,7 @@ namespace WpfApp3
             }
             catch (Exception exception)
             {
+                Logger.Error(exception, "Ошибка загрузки страницы"); // добавлено
                 TbStatus.Text = $"❌ Ошибка загрузки: {exception.Message}";
             }
         }
