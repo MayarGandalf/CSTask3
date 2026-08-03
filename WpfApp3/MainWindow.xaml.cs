@@ -5,14 +5,15 @@ using System.Windows;
 using Microsoft.Win32;
 using WpfApp3.Models;
 using WpfApp3.Services;
-using WpfApp3.Helpers; // добавлено
+using WpfApp3.Helpers;
+using MahApps.Metro.Controls; 
 
 namespace WpfApp3
 {
     /// <summary>
     /// Основное окно приложения. Содержит логику загрузки, фильтрации, пагинации и экспорта данных.
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : MetroWindow 
     {
         private readonly PersonManager _repository;
         private readonly PaginationService _pagination;
@@ -70,7 +71,7 @@ namespace WpfApp3
             }
             catch (Exception exception)
             {
-                Logger.Error(exception, "Ошибка загрузки страницы"); // добавлено
+                Logger.Error(exception, "Ошибка загрузки страницы");
                 TbStatus.Text = $"❌ Ошибка загрузки: {exception.Message}";
             }
         }

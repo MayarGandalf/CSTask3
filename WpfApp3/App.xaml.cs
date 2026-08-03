@@ -22,11 +22,11 @@ namespace WpfApp3
             try
             {
                 DBInitializer.Initialize();
-                Logger.Info("База данных инициализирована успешно."); // добавлено
+                Logger.Info("База данных инициализирована успешно.");
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Ошибка инициализации БД"); // добавлено
+                Logger.Error(ex, "Ошибка инициализации БД");
                 MessageBox.Show($"Ошибка инициализации БД:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 Environment.Exit(1);
             }
