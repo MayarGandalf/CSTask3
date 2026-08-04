@@ -21,7 +21,7 @@ namespace WpfApp3.Services
         /// </summary>
         /// <param name="filePath">Путь к CSV-файлу.</param>
         /// <returns>Асинхронное перечисление объектов Person.</returns>
-        public async IAsyncEnumerable<Person> ImportAsync(string filePath)
+        public virtual async IAsyncEnumerable<Person> ImportAsync(string filePath)
         {
             using var reader = new StreamReader(filePath);
             string? line;

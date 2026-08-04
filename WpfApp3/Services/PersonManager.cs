@@ -1,12 +1,12 @@
-﻿using EFCore.BulkExtensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WpfApp3.Data;
-using WpfApp3.Helpers;
-using WpfApp3.Models;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
+using WpfApp3.Data;
+using WpfApp3.Models;
+using WpfApp3.Helpers;
 
 namespace WpfApp3.Services
 {
@@ -16,7 +16,6 @@ namespace WpfApp3.Services
     /// </summary>
     public class PersonManager
     {
-        // Буфер для накопления записей перед массовой вставкой (оптимизированный импорт)
         private readonly List<Person> _bulkBuffer = new List<Person>(capacity: 50000);
         private readonly int _batchSize = 50000;
 
@@ -27,7 +26,7 @@ namespace WpfApp3.Services
         /// <param name="take">Количество записей на странице.</param>
         /// <param name="criteria">Критерии фильтрации.</param>
         /// <returns>Список Person.</returns>
-        public List<Person> GetPaged(int skip, int take, FilterCriteria criteria)
+        public virtual List<Person> GetPaged(int skip, int take, FilterCriteria criteria)
         {
             using (var context = new ProjectDbContext())
             {
@@ -41,7 +40,7 @@ namespace WpfApp3.Services
         /// </summary>
         /// <param name="criteria">Критерии фильтрации.</param>
         /// <returns>Количество записей.</returns>
-        public int GetTotalCount(FilterCriteria criteria)
+        public virtual int GetTotalCount(FilterCriteria criteria)
         {
             using (var context = new ProjectDbContext())
             {
@@ -56,7 +55,7 @@ namespace WpfApp3.Services
         /// </summary>
         /// <param name="criteria">Критерии фильтрации.</param>
         /// <returns>Поток объектов Person.</returns>
-        public IEnumerable<Person> GetFilteredStream(FilterCriteria criteria)
+        public virtual IEnumerable<Person> GetFilteredStream(FilterCriteria criteria)
         {
             using var context = new ProjectDbContext();
             var query = BuildFilteredQuery(context.Persons.AsNoTracking(), criteria);
@@ -99,7 +98,7 @@ namespace WpfApp3.Services
         /// </summary>
         /// <param name="person">Объект Person для добавления.</param>
         /// <returns>Задача, представляющая асинхронную операцию.</returns>
-        public async Task AddForBulkAsync(Person person)
+        public virtual async Task AddForBulkAsync(Person person)
         {
             _bulkBuffer.Add(person);
             if (_bulkBuffer.Count >= _batchSize)
@@ -113,7 +112,7 @@ namespace WpfApp3.Services
         /// Использует EFCore.BulkExtensions с оптимизированными настройками.
         /// </summary>
         /// <returns>Задача, представляющая асинхронную операцию.</returns>
-        public async Task FlushBulkAsync()
+        public virtual async Task FlushBulkAsync()
         {
             if (_bulkBuffer.Count == 0) return;
 
@@ -123,7 +122,7 @@ namespace WpfApp3.Services
                 {
                     var config = new BulkConfig
                     {
-                        SetOutputIdentity = false,   // не возвращать сгенерированные Id (ускоряет)
+                        SetOutputIdentity = false,   
                         PreserveInsertOrder = false,
                         UseTempDB = false,
                         BatchSize = _batchSize
@@ -133,10 +132,19 @@ namespace WpfApp3.Services
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, "Ошибка массовой вставки"); // добавлено
+                    Logger.Error(ex, "Ошибка массовой вставки");
+                    _bulkBuffer.Clear();
                     throw;
                 }
             }
+        }
+
+        /// <summary>
+        /// Очищает буфер массовой вставки (например, при ошибке импорта).
+        /// </summary>
+        public virtual void ClearBuffer()
+        {
+            _bulkBuffer.Clear();
         }
 
         /// <summary>
@@ -144,7 +152,7 @@ namespace WpfApp3.Services
         /// </summary>
         /// <param name="persons">Список объектов Person для вставки.</param>
         /// <returns>Задача, представляющая асинхронную операцию.</returns>
-        public async Task SaveAsync(IEnumerable<Person> persons)
+        public virtual async Task SaveAsync(IEnumerable<Person> persons)
         {
             using (var context = new ProjectDbContext())
             {

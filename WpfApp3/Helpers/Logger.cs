@@ -40,7 +40,7 @@ namespace WpfApp3.Helpers
         public static void Error(string message) => WriteLog(message, "ERROR");
 
         /// <summary>
-        /// Логирует исключение с сообщением и стек-трейсом.
+        /// Логирует исключение с сообщением 
         /// </summary>
         public static void Error(Exception ex, string? message = null)
         {

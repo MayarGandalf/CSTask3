@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WpfApp3.Models;
-using WpfApp3.Helpers; // добавлено
+using WpfApp3.Helpers;
 
 namespace WpfApp3.Services
 {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using WpfApp3.Models;
-using WpfApp3.Helpers; // добавлено
+using WpfApp3.Helpers;
 
 namespace WpfApp3.Services
 {
@@ -33,7 +33,7 @@ namespace WpfApp3.Services
         /// <returns>Кортеж: количество импортированных записей и сообщение об ошибке (null при успехе).</returns>
         public async Task<(int count, string? error)> ImportAsync(string filePath)
         {
-            Logger.Info($"Начало импорта из {filePath}"); // добавлено
+            Logger.Info($"Начало импорта из {filePath}");
 
             try
             {
@@ -61,7 +61,9 @@ namespace WpfApp3.Services
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Ошибка импорта"); 
+                Logger.Error(ex, "Ошибка импорта");
+                // Очищаем буфер репозитория, чтобы избежать повторной вставки данных при следующем импорте
+                _repository.ClearBuffer();
                 return (0, $"Ошибка импорта: {ex.Message}");
             }
         }
