@@ -33,7 +33,7 @@ namespace WpfApp3.Services
         /// <returns>Кортеж: количество импортированных записей и сообщение об ошибке (null при успехе).</returns>
         public async Task<(int count, string? error)> ImportAsync(string filePath)
         {
-            Logger.Info($"Начало импорта из {filePath}");
+            Logger.Info($"Import started from {filePath}");
 
             try
             {
@@ -52,7 +52,7 @@ namespace WpfApp3.Services
 
                 await _repository.FlushBulkAsync().ConfigureAwait(false);
 
-                Logger.Info($"Импорт завершён. Загружено {totalCount} записей, пропущено {skippedCount}.");
+                Logger.Info($"Import completed. {totalCount} records loaded, {skippedCount} skipped.");
 
                 if (totalCount == 0)
                     return (0, "Не найдено корректных данных.");
@@ -61,8 +61,7 @@ namespace WpfApp3.Services
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Ошибка импорта");
-                // Очищаем буфер репозитория, чтобы избежать повторной вставки данных при следующем импорте
+                Logger.Error(ex, "Import error");
                 _repository.ClearBuffer();
                 return (0, $"Ошибка импорта: {ex.Message}");
             }

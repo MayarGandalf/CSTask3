@@ -6,9 +6,9 @@
         Height="500" Width="800"
         WindowState="Maximized"
         GlowBrush="{DynamicResource AccentColorBrush}"
-        BorderThickness="0">
+        BorderThickness="0"
+        DataContext="{Binding RelativeSource={RelativeSource Self}, Path=ViewModel}">
     <Window.Resources>
-        <!-- Стиль для кнопок  -->
         <Style TargetType="Button" x:Key="SoftButtonStyle">
             <Setter Property="Background" Value="#DDE6E8"/>
             <Setter Property="Foreground" Value="#2C3E50"/>
@@ -39,7 +39,6 @@
             </Setter>
         </Style>
 
-        <!-- Стиль для DataGrid -->
         <Style TargetType="DataGrid">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="RowHeight" Value="30"/>
@@ -80,51 +79,52 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Строка 0: кнопки управления  -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10" Grid.ColumnSpan="2">
-            <Button x:Name="BtnLoad" Click="BtnLoad_Click" Width="150" Margin="0,0,10,0" Style="{StaticResource SoftButtonStyle}">📂 Загрузить CSV</Button>
-            <Button x:Name="BtnApplyFilter" Click="BtnApplyFilter_Click" Width="130" Margin="0,0,10,0" Style="{StaticResource SoftButtonStyle}">🔍 Применить фильтр</Button>
-            <Button x:Name="BtnClearFilter" Click="BtnClearFilter_Click" Width="120" Margin="0,0,10,0" Style="{StaticResource SoftButtonStyle}">🧹 Сбросить фильтр</Button>
-            <Button x:Name="BtnExportExcel" Click="BtnExportExcel_Click" Width="140" Margin="0,0,10,0" Style="{StaticResource SoftButtonStyle}">📊 Экспорт в Excel</Button>
-            <Button x:Name="BtnExportXml" Click="BtnExportXml_Click" Width="140" Style="{StaticResource SoftButtonStyle}">📄 Экспорт в XML</Button>
+            <Button Command="{Binding LoadCsvCommand}" Width="150" Margin="0,0,10,0" Style="{StaticResource SoftButtonStyle}">📂 Загрузить CSV</Button>
+            <Button Command="{Binding ApplyFilterCommand}" Width="130" Margin="0,0,10,0" Style="{StaticResource SoftButtonStyle}">🔍 Применить фильтр</Button>
+            <Button Command="{Binding ClearFilterCommand}" Width="120" Margin="0,0,10,0" Style="{StaticResource SoftButtonStyle}">🧹 Сбросить фильтр</Button>
+            <Button Command="{Binding ExportExcelCommand}" Width="140" Margin="0,0,10,0" Style="{StaticResource SoftButtonStyle}">📊 Экспорт в Excel</Button>
+            <Button Command="{Binding ExportXmlCommand}" Width="140" Style="{StaticResource SoftButtonStyle}">📄 Экспорт в XML</Button>
         </StackPanel>
 
-        <!-- Строка 1: поля фильтрации -->
         <WrapPanel Grid.Row="1" VerticalAlignment="Top" Grid.ColumnSpan="2">
             <TextBlock Text="Id:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-            <TextBox x:Name="TbId" Width="60" VerticalAlignment="Center" Margin="2,0,5,0"/>
+            <TextBox Text="{Binding FilterId, UpdateSourceTrigger=PropertyChanged}" Width="60" VerticalAlignment="Center" Margin="2,0,5,0"/>
             <TextBlock Text="Имя:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-            <TextBox x:Name="TbFirstName" Width="80" VerticalAlignment="Center" Margin="2,0,5,0"/>
+            <TextBox Text="{Binding FilterFirstName, UpdateSourceTrigger=PropertyChanged}" Width="80" VerticalAlignment="Center" Margin="2,0,5,0"/>
             <TextBlock Text="Фамилия:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-            <TextBox x:Name="TbLastName" Width="80" VerticalAlignment="Center" Margin="2,0,5,0"/>
+            <TextBox Text="{Binding FilterLastName, UpdateSourceTrigger=PropertyChanged}" Width="80" VerticalAlignment="Center" Margin="2,0,5,0"/>
             <TextBlock Text="Отчество:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-            <TextBox x:Name="TbMiddleName" Width="80" VerticalAlignment="Center" Margin="2,0,5,0"/>
+            <TextBox Text="{Binding FilterMiddleName, UpdateSourceTrigger=PropertyChanged}" Width="80" VerticalAlignment="Center" Margin="2,0,5,0"/>
             <TextBlock Text="Город:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-            <TextBox x:Name="TbCity" Width="80" VerticalAlignment="Center" Margin="2,0,5,0"/>
+            <TextBox Text="{Binding FilterCity, UpdateSourceTrigger=PropertyChanged}" Width="80" VerticalAlignment="Center" Margin="2,0,5,0"/>
             <TextBlock Text="Страна:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-            <TextBox x:Name="TbCountry" Width="80" VerticalAlignment="Center" Margin="2,0,5,0"/>
+            <TextBox Text="{Binding FilterCountry, UpdateSourceTrigger=PropertyChanged}" Width="80" VerticalAlignment="Center" Margin="2,0,5,0"/>
             <TextBlock Text="Дата с:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-            <DatePicker x:Name="DpDateFrom" VerticalAlignment="Center" Margin="2,0,5,0" Width="100"/>
+            <DatePicker SelectedDate="{Binding FilterDateFrom}" VerticalAlignment="Center" Margin="2,0,5,0" Width="100"/>
             <TextBlock Text="по:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-            <DatePicker x:Name="DpDateTo" VerticalAlignment="Center" Margin="2,0,5,0" Width="100"/>
+            <DatePicker SelectedDate="{Binding FilterDateTo}" VerticalAlignment="Center" Margin="2,0,5,0" Width="100"/>
         </WrapPanel>
 
-        <!-- Строка 2: пагинация + статус -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,10" Grid.ColumnSpan="2">
-            <Button x:Name="BtnPrevPage" Click="BtnPrevPage_Click" Width="60" Margin="0,0,5,0" Style="{StaticResource SoftButtonStyle}">◀</Button>
+            <Button Command="{Binding PrevPageCommand}" Width="60" Margin="0,0,5,0" Style="{StaticResource SoftButtonStyle}">◀</Button>
             <TextBlock Text="Страница" VerticalAlignment="Center" Margin="5,0,5,0"/>
-            <TextBox x:Name="TbPageNumber" Text="1" Width="40" TextAlignment="Center" VerticalAlignment="Center" Margin="2,0,5,0" KeyDown="TbPageNumber_KeyDown"/>
+            <TextBox x:Name="TbPageNumber" Text="{Binding CurrentPage, UpdateSourceTrigger=PropertyChanged}" Width="40" TextAlignment="Center" VerticalAlignment="Center" Margin="2,0,5,0">
+                <TextBox.InputBindings>
+                    <KeyBinding Command="{Binding GoToPageCommand}" CommandParameter="{Binding Text, RelativeSource={RelativeSource Self}}" Key="Enter"/>
+                </TextBox.InputBindings>
+            </TextBox>
             <TextBlock Text="из" VerticalAlignment="Center" Margin="5,0,5,0"/>
-            <TextBlock x:Name="TbTotalPages" Text="0" VerticalAlignment="Center" Margin="0,0,5,0"/>
-            <Button x:Name="BtnNextPage" Click="BtnNextPage_Click" Width="60" Margin="5,0,0,0" Style="{StaticResource SoftButtonStyle}">▶</Button>
+            <TextBlock Text="{Binding TotalPages}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <Button Command="{Binding NextPageCommand}" Width="60" Margin="5,0,0,0" Style="{StaticResource SoftButtonStyle}">▶</Button>
             <TextBlock Text=" | Записей:" VerticalAlignment="Center" Margin="10,0,0,0"/>
-            <TextBlock x:Name="TbTotalRecords" Text="0" VerticalAlignment="Center" Margin="2,0,0,0"/>
+            <TextBlock Text="{Binding TotalRecords}" VerticalAlignment="Center" Margin="2,0,0,0"/>
             <TextBlock Text=" | " VerticalAlignment="Center" Margin="5,0,5,0"/>
-            <TextBlock x:Name="TbStatus" Text="Готово" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
         </StackPanel>
 
-        <!-- Строка 3: DataGrid -->
         <DataGrid x:Name="DgRecords" Grid.Row="3" 
+                  ItemsSource="{Binding Persons}"
                   AutoGenerateColumns="False" 
                   IsReadOnly="True"
                   CanUserAddRows="False"

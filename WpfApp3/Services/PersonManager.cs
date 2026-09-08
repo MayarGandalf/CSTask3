@@ -122,7 +122,7 @@ namespace WpfApp3.Services
                 {
                     var config = new BulkConfig
                     {
-                        SetOutputIdentity = false,   
+                        SetOutputIdentity = false,
                         PreserveInsertOrder = false,
                         UseTempDB = false,
                         BatchSize = _batchSize
@@ -132,7 +132,7 @@ namespace WpfApp3.Services
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, "Ошибка массовой вставки");
+                    Logger.Error(ex, "Bulk insert error");
                     _bulkBuffer.Clear();
                     throw;
                 }

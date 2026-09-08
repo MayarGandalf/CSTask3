@@ -7,13 +7,19 @@ using Xunit;
 
 namespace WpfApp3.Tests
 {
+    /// <summary>
+    /// Тесты для <see cref="XmlExporter"/>, проверяющие корректность генерации XML-файлов.
+    /// </summary>
     public class XmlExporterTests
     {
+        /// <summary>
+        /// Проверяет, что экспорт данных создаёт XML-файл с правильной структурой и содержимым.
+        /// </summary>
         [Fact]
-        public void CreateXmlWithStructure()
+        public void ExportXmlWithValidData()
         {
             var exporter = new XmlExporter();
-            var testData = new List<Person>
+            var persons = new List<Person>
             {
                 new Person
                 {
@@ -26,80 +32,46 @@ namespace WpfApp3.Tests
                     Date = new System.DateTime(2020, 1, 1)
                 }
             };
-            string tempFile = Path.GetTempFileName() + ".xml";
+            var tempFile = Path.GetTempFileName() + ".xml";
 
-            try
-            {
-                exporter.Export(testData, tempFile);
+            exporter.Export(persons, tempFile);
 
-                Assert.True(File.Exists(tempFile));
-                var doc = XDocument.Load(tempFile);
-                var root = doc.Root;
-                Assert.NotNull(root);
-                Assert.Equal("Persons", root.Name.LocalName);
+            Assert.True(File.Exists(tempFile));
+            var document = XDocument.Load(tempFile);
+            var root = document.Root;
+            Assert.Equal("Persons", root.Name.LocalName);
 
-                var records = root.Element("Records");
-                Assert.NotNull(records);
+            var records = root.Element("Records");
+            var personElement = records.Element("Person");
 
-                var person = records.Element("Person");
-                Assert.NotNull(person);
+            Assert.Equal("1", personElement.Element("Id").Value);
+            Assert.Equal("2020-01-01", personElement.Element("Date").Value);
+            Assert.Equal("John", personElement.Element("FirstName").Value);
+            Assert.Equal("Doe", personElement.Element("LastName").Value);
+            Assert.Equal("M", personElement.Element("MiddleName").Value);
+            Assert.Equal("NY", personElement.Element("City").Value);
+            Assert.Equal("USA", personElement.Element("Country").Value);
 
-                var idElement = person.Element("Id");
-                Assert.NotNull(idElement);
-                Assert.Equal("1", idElement.Value);
-
-                var dateElement = person.Element("Date");
-                Assert.NotNull(dateElement);
-                Assert.Equal("2020-01-01", dateElement.Value);
-
-                var firstNameElement = person.Element("FirstName");
-                Assert.NotNull(firstNameElement);
-                Assert.Equal("John", firstNameElement.Value);
-
-                var lastNameElement = person.Element("LastName");
-                Assert.NotNull(lastNameElement);
-                Assert.Equal("Doe", lastNameElement.Value);
-
-                var middleNameElement = person.Element("MiddleName");
-                Assert.NotNull(middleNameElement);
-                Assert.Equal("M", middleNameElement.Value);
-
-                var cityElement = person.Element("City");
-                Assert.NotNull(cityElement);
-                Assert.Equal("NY", cityElement.Value);
-
-                var countryElement = person.Element("Country");
-                Assert.NotNull(countryElement);
-                Assert.Equal("USA", countryElement.Value);
-            }
-            finally
-            {
-                if (File.Exists(tempFile)) File.Delete(tempFile);
-            }
+            File.Delete(tempFile);
         }
 
+        /// <summary>
+        /// Проверяет, что экспорт пустого набора данных создаёт XML-файл с пустым блоком Records.
+        /// </summary>
         [Fact]
-        public void EmptyDataXml()
+        public void ExportEmptyXmlCreatesEmptyRecords()
         {
             var exporter = new XmlExporter();
-            var emptyData = new List<Person>();
-            string tempFile = Path.GetTempFileName() + ".xml";
+            var tempFile = Path.GetTempFileName() + ".xml";
 
-            try
-            {
-                exporter.Export(emptyData, tempFile);
-                Assert.True(File.Exists(tempFile));
-                var doc = XDocument.Load(tempFile);
-                var root = doc.Root;
-                Assert.NotNull(root);
-                var records = root.Element("Records");
-                Assert.NotNull(records);
-                Assert.Empty(records.Elements());
-            }
-            finally
-            {
-                if (File.Exists(tempFile)) File.Delete(tempFile);
-            }
+            exporter.Export(new List<Person>(), tempFile);
+
+            Assert.True(File.Exists(tempFile));
+            var document = XDocument.Load(tempFile);
+            var records = document.Root.Element("Records");
+            Assert.Empty(records.Elements());
+
+            File.Delete(tempFile);
         }
     }
 }

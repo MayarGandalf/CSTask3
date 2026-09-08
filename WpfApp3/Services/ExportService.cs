@@ -35,26 +35,26 @@ namespace WpfApp3.Services
             string filePath,
             Action<IEnumerable<Person>, string> exportAction)
         {
-            Logger.Info($"Начало экспорта в {filePath}");
+            Logger.Info($"Export started to {filePath}");
 
             try
             {
                 var totalCount = _repository.GetTotalCount(criteria);
                 if (totalCount == 0)
                 {
-                    Logger.Warning($"Нет данных для экспорта по заданным фильтрам."); 
+                    Logger.Warning("No data to export with the current filters.");
                     return (0, "Нет данных для экспорта с выбранными фильтрами.");
                 }
 
                 var dataStream = _repository.GetFilteredStream(criteria);
                 await Task.Run(() => exportAction(dataStream, filePath));
 
-                Logger.Info($"Экспорт завершён. Экспортировано {totalCount} записей.");
+                Logger.Info($"Export completed. {totalCount} records exported.");
                 return (totalCount, null);
             }
             catch (Exception exception)
             {
-                Logger.Error(exception, "Ошибка экспорта");
+                Logger.Error(exception, "Export error");
                 return (0, $"Ошибка экспорта: {exception.Message}");
             }
         }

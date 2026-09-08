@@ -9,148 +9,99 @@ using Xunit;
 
 namespace WpfApp3.Tests
 {
+    /// <summary>
+    /// Тесты для <see cref="ImportService"/>, проверяющие логику импорта с использованием репозитория.
+    /// </summary>
     public class ImportServiceTests
     {
+        /// <summary>
+        /// Проверяет, что при импорте валидных данных все записи добавляются в репозиторий и выполняется сброс буфера.
+        /// </summary>
         [Fact]
-        public async Task AddAllRecords()
+        public async Task ImportValidDataShouldAddAndFlush()
         {
-            // Arrange
-            var mockImporter = new Mock<Importer>();
-            var mockRepository = new Mock<PersonManager>();
+            var importerMock = new Mock<Importer>();
+            var repositoryMock = new Mock<PersonManager>();
 
-            var testData = new List<Person>
+            var persons = new[]
             {
                 new Person { Id = 1, FirstName = "John" },
                 new Person { Id = 2, FirstName = "Jane" }
             };
+            importerMock.Setup(importer => importer.ImportAsync(It.IsAny<string>())).Returns(persons.ToAsyncEnumerable());
 
-            mockImporter
-                .Setup(x => x.ImportAsync(It.IsAny<string>()))
-                .Returns(testData.ToAsyncEnumerable());
-
-            var service = new ImportService(mockImporter.Object, mockRepository.Object);
-
-            // Act
+            var service = new ImportService(importerMock.Object, repositoryMock.Object);
             var (count, error) = await service.ImportAsync("test.csv");
 
-            // Assert
             Assert.Null(error);
             Assert.Equal(2, count);
-            mockRepository.Verify(r => r.AddForBulkAsync(It.IsAny<Person>()), Times.Exactly(2));
-            mockRepository.Verify(r => r.FlushBulkAsync(), Times.Once);
+            repositoryMock.Verify(repository => repository.AddForBulkAsync(It.IsAny<Person>()), Times.Exactly(2));
+            repositoryMock.Verify(repository => repository.FlushBulkAsync(), Times.Once);
         }
 
+        /// <summary>
+        /// Проверяет, что при отсутствии данных возвращается соответствующая ошибка,
+        /// и метод добавления не вызывается.
+        /// </summary>
         [Fact]
-        public async Task NoData()
+        public async Task ImportWithNoDataReturnsError()
         {
-            // Arrange
-            var mockImporter = new Mock<Importer>();
-            var mockRepository = new Mock<PersonManager>();
+            var importerMock = new Mock<Importer>();
+            var repositoryMock = new Mock<PersonManager>();
+            importerMock.Setup(importer => importer.ImportAsync(It.IsAny<string>())).Returns(AsyncEnumerable.Empty<Person>());
 
-            mockImporter
-                .Setup(x => x.ImportAsync(It.IsAny<string>()))
-                .Returns(AsyncEnumerable.Empty<Person>());
-
-            var service = new ImportService(mockImporter.Object, mockRepository.Object);
-
-            // Act
+            var service = new ImportService(importerMock.Object, repositoryMock.Object);
             var (count, error) = await service.ImportAsync("test.csv");
 
-            // Assert
             Assert.Equal(0, count);
             Assert.Equal("Не найдено корректных данных.", error);
-            mockRepository.Verify(r => r.AddForBulkAsync(It.IsAny<Person>()), Times.Never);
-            mockRepository.Verify(r => r.FlushBulkAsync(), Times.Once);
+            repositoryMock.Verify(repository => repository.AddForBulkAsync(It.IsAny<Person>()), Times.Never);
+            repositoryMock.Verify(repository => repository.FlushBulkAsync(), Times.Once);
         }
 
+        /// <summary>
+        /// Проверяет, что если <see cref="Importer"/> выбрасывает исключение,
+        /// сервис возвращает ошибку и не вызывает методы репозитория.
+        /// </summary>
         [Fact]
-        public async Task CatchException()
+        public async Task ImporterThrowsThenServiceReturnsError()
         {
-            // Arrange
-            var mockImporter = new Mock<Importer>();
-            var mockRepository = new Mock<PersonManager>();
+            var importerMock = new Mock<Importer>();
+            var repositoryMock = new Mock<PersonManager>();
+            importerMock.Setup(importer => importer.ImportAsync(It.IsAny<string>())).Throws(new InvalidOperationException("File read error"));
 
-            mockImporter
-                .Setup(x => x.ImportAsync(It.IsAny<string>()))
-                .Throws(new InvalidOperationException("File read error"));
-
-            var service = new ImportService(mockImporter.Object, mockRepository.Object);
-
-            // Act
+            var service = new ImportService(importerMock.Object, repositoryMock.Object);
             var (count, error) = await service.ImportAsync("test.csv");
 
-            // Assert
             Assert.Equal(0, count);
             Assert.Contains("Ошибка импорта", error);
             Assert.Contains("File read error", error);
-            mockRepository.Verify(r => r.AddForBulkAsync(It.IsAny<Person>()), Times.Never);
-            mockRepository.Verify(r => r.FlushBulkAsync(), Times.Never);
+            repositoryMock.Verify(repository => repository.AddForBulkAsync(It.IsAny<Person>()), Times.Never);
+            repositoryMock.Verify(repository => repository.FlushBulkAsync(), Times.Never);
         }
 
+        /// <summary>
+        /// Проверяет, что если репозиторий выбрасывает исключение при добавлении,
+        /// сервис возвращает ошибку и не вызывает <see cref="PersonManager.FlushBulkAsync"/>.
+        /// </summary>
         [Fact]
-        public async Task RepositoryFails()
+        public async Task RepositoryAddFailsThenReturnsErrorAndClearsBuffer()
         {
-            // Arrange
-            var mockImporter = new Mock<Importer>();
-            var mockRepository = new Mock<PersonManager>();
+            var importerMock = new Mock<Importer>();
+            var repositoryMock = new Mock<PersonManager>();
 
-            var testData = new List<Person>
-            {
-                new Person { Id = 1, FirstName = "John" }
-            };
+            var persons = new[] { new Person { Id = 1, FirstName = "John" } };
+            importerMock.Setup(importer => importer.ImportAsync(It.IsAny<string>())).Returns(persons.ToAsyncEnumerable());
+            repositoryMock.Setup(repository => repository.AddForBulkAsync(It.IsAny<Person>())).ThrowsAsync(new InvalidOperationException("DB insert error"));
 
-            mockImporter
-                .Setup(x => x.ImportAsync(It.IsAny<string>()))
-                .Returns(testData.ToAsyncEnumerable());
-
-            mockRepository
-                .Setup(r => r.AddForBulkAsync(It.IsAny<Person>()))
-                .ThrowsAsync(new InvalidOperationException("DB insert error"));
-
-            var service = new ImportService(mockImporter.Object, mockRepository.Object);
-
-            // Act
+            var service = new ImportService(importerMock.Object, repositoryMock.Object);
             var (count, error) = await service.ImportAsync("test.csv");
 
-            // Assert
             Assert.Equal(0, count);
             Assert.Contains("Ошибка импорта", error);
             Assert.Contains("DB insert error", error);
-            mockRepository.Verify(r => r.AddForBulkAsync(It.IsAny<Person>()), Times.Once);
-            mockRepository.Verify(r => r.FlushBulkAsync(), Times.Never);
-        }
-
-        [Fact]
-        public async Task RepositorySucceeds()
-        {
-            // Arrange
-            var mockImporter = new Mock<Importer>();
-            var mockRepository = new Mock<PersonManager>();
-
-            var testData = new List<Person>
-            {
-                new Person { Id = 1, FirstName = "John" },
-                new Person { Id = 2, FirstName = "Jane" }
-            };
-
-            mockImporter
-                .Setup(x => x.ImportAsync(It.IsAny<string>()))
-                .Returns(testData.ToAsyncEnumerable());
-
-            mockRepository
-                .Setup(r => r.AddForBulkAsync(It.IsAny<Person>()))
-                .Returns(Task.CompletedTask);
-
-            var service = new ImportService(mockImporter.Object, mockRepository.Object);
-
-            // Act
-            var (count, error) = await service.ImportAsync("test.csv");
-
-            // Assert
-            Assert.Null(error);
-            Assert.Equal(2, count);
-            mockRepository.Verify(r => r.AddForBulkAsync(It.IsAny<Person>()), Times.Exactly(2));
-            mockRepository.Verify(r => r.FlushBulkAsync(), Times.Once);
+            repositoryMock.Verify(repository => repository.AddForBulkAsync(It.IsAny<Person>()), Times.Once);
+            repositoryMock.Verify(repository => repository.FlushBulkAsync(), Times.Never);
         }
     }
 }
