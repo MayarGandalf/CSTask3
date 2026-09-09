@@ -7,7 +7,7 @@ namespace WpfApp3.Commands
     /// Базовая реализация команды <see cref="ICommand"/> без параметров.
     /// Используется для привязки действий в ViewModel к элементам управления.
     /// </summary>
-    public class CommandBase : ICommand
+    public class CommandsWorker : ICommand
     {
         private readonly Action _execute;
         private readonly Func<bool>? _canExecute;
@@ -18,7 +18,7 @@ namespace WpfApp3.Commands
         /// <param name="execute">Делегат, выполняющий основное действие команды.</param>
         /// <param name="canExecute">Делегат, определяющий доступность команды (необязательный).</param>
         /// <exception cref="ArgumentNullException">Выбрасывается, если <paramref name="execute"/> равен null.</exception>
-        public CommandBase(Action execute, Func<bool>? canExecute = null)
+        public CommandsWorker(Action execute, Func<bool>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;

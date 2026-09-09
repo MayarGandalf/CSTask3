@@ -212,13 +212,13 @@ namespace WpfApp3.ViewModels
             TotalPages = _pagination.TotalPages;
             TotalRecords = _pagination.TotalRecords;
 
-            LoadCsvCommand = new CommandBase(ExecuteLoadCsv, () => !IsBusy);
-            ApplyFilterCommand = new CommandBase(ExecuteApplyFilter, () => !IsBusy);
-            ClearFilterCommand = new CommandBase(ExecuteClearFilter, () => !IsBusy);
-            ExportExcelCommand = new CommandBase(ExecuteExportExcel, () => !IsBusy);
-            ExportXmlCommand = new CommandBase(ExecuteExportXml, () => !IsBusy);
-            NextPageCommand = new CommandBase(ExecuteNextPage, () => !IsBusy && _pagination.CanGoNext);
-            PrevPageCommand = new CommandBase(ExecutePrevPage, () => !IsBusy && _pagination.CanGoPrevious);
+            LoadCsvCommand = new CommandsWorker(ExecuteLoadCsv, () => !IsBusy);
+            ApplyFilterCommand = new CommandsWorker(ExecuteApplyFilter, () => !IsBusy);
+            ClearFilterCommand = new CommandsWorker(ExecuteClearFilter, () => !IsBusy);
+            ExportExcelCommand = new CommandsWorker(ExecuteExportExcel, () => !IsBusy);
+            ExportXmlCommand = new CommandsWorker(ExecuteExportXml, () => !IsBusy);
+            NextPageCommand = new CommandsWorker(ExecuteNextPage, () => !IsBusy && _pagination.CanGoNext);
+            PrevPageCommand = new CommandsWorker(ExecutePrevPage, () => !IsBusy && _pagination.CanGoPrevious);
             GoToPageCommand = new RelayCommand<string>(ExecuteGoToPage, _ => !IsBusy);
 
             _ = LoadPageAsync();
@@ -268,8 +268,8 @@ namespace WpfApp3.ViewModels
                 TotalRecords = total;
 
                 Persons.Clear();
-                foreach (var p in data)
-                    Persons.Add(p);
+                foreach (var person in data)
+                    Persons.Add(person);
 
                 StatusText = $"Показано: {data.Count} (всего: {total})";
             }

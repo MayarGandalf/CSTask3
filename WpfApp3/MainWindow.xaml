@@ -79,6 +79,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!-- кнопки управления -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10" Grid.ColumnSpan="2">
             <Button Command="{Binding LoadCsvCommand}" Width="150" Margin="0,0,10,0" Style="{StaticResource SoftButtonStyle}">📂 Загрузить CSV</Button>
             <Button Command="{Binding ApplyFilterCommand}" Width="130" Margin="0,0,10,0" Style="{StaticResource SoftButtonStyle}">🔍 Применить фильтр</Button>
@@ -87,6 +88,7 @@
             <Button Command="{Binding ExportXmlCommand}" Width="140" Style="{StaticResource SoftButtonStyle}">📄 Экспорт в XML</Button>
         </StackPanel>
 
+        <!--  поля фильтрации -->
         <WrapPanel Grid.Row="1" VerticalAlignment="Top" Grid.ColumnSpan="2">
             <TextBlock Text="Id:" VerticalAlignment="Center" Margin="5,0,0,0"/>
             <TextBox Text="{Binding FilterId, UpdateSourceTrigger=PropertyChanged}" Width="60" VerticalAlignment="Center" Margin="2,0,5,0"/>
@@ -106,14 +108,17 @@
             <DatePicker SelectedDate="{Binding FilterDateTo}" VerticalAlignment="Center" Margin="2,0,5,0" Width="100"/>
         </WrapPanel>
 
+        <!--  пагинация статус -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,10" Grid.ColumnSpan="2">
             <Button Command="{Binding PrevPageCommand}" Width="60" Margin="0,0,5,0" Style="{StaticResource SoftButtonStyle}">◀</Button>
             <TextBlock Text="Страница" VerticalAlignment="Center" Margin="5,0,5,0"/>
+
             <TextBox x:Name="TbPageNumber" Text="{Binding CurrentPage, UpdateSourceTrigger=PropertyChanged}" Width="40" TextAlignment="Center" VerticalAlignment="Center" Margin="2,0,5,0">
                 <TextBox.InputBindings>
-                    <KeyBinding Command="{Binding GoToPageCommand}" CommandParameter="{Binding Text, RelativeSource={RelativeSource Self}}" Key="Enter"/>
+                    <KeyBinding Command="{Binding GoToPageCommand}" CommandParameter="{Binding Text, ElementName=TbPageNumber}" Key="Enter"/>
                 </TextBox.InputBindings>
             </TextBox>
+
             <TextBlock Text="из" VerticalAlignment="Center" Margin="5,0,5,0"/>
             <TextBlock Text="{Binding TotalPages}" VerticalAlignment="Center" Margin="0,0,5,0"/>
             <Button Command="{Binding NextPageCommand}" Width="60" Margin="5,0,0,0" Style="{StaticResource SoftButtonStyle}">▶</Button>
@@ -123,6 +128,7 @@
             <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
         </StackPanel>
 
+        <!--  DataGrid -->
         <DataGrid x:Name="DgRecords" Grid.Row="3" 
                   ItemsSource="{Binding Persons}"
                   AutoGenerateColumns="False" 
