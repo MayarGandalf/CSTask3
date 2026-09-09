@@ -33,8 +33,7 @@ namespace WpfApp3.Tests
             var service = new ExportService(repositoryMock.Object);
             bool exportCalled = false;
 
-            var (count, error) = await service.ExportAsync(new FilterCriteria(), "test.xlsx",
-                (data, path) =>
+            var (count, error) = await service.ExportAsync(new FilterCriteria(), "test.xlsx", (data, path) =>
                 {
                     exportCalled = true;
                     Assert.Equal(2, data.Count());
@@ -59,8 +58,7 @@ namespace WpfApp3.Tests
             var service = new ExportService(repositoryMock.Object);
             bool exportCalled = false;
 
-            var (count, error) = await service.ExportAsync(new FilterCriteria(), "test.xlsx",
-                (_, _) => exportCalled = true);
+            var (count, error) = await service.ExportAsync(new FilterCriteria(), "test.xlsx", (_, _) => exportCalled = true);
 
             Assert.Equal(0, count);
             Assert.Equal("Нет данных для экспорта с выбранными фильтрами.", error);
@@ -76,13 +74,11 @@ namespace WpfApp3.Tests
         public async Task ExportWhenRepositoryThrows()
         {
             var repositoryMock = new Mock<PersonManager>();
-            repositoryMock.Setup(repository => repository.GetTotalCount(It.IsAny<FilterCriteria>()))
-                          .Throws(new InvalidOperationException("DB error"));
+            repositoryMock.Setup(repository => repository.GetTotalCount(It.IsAny<FilterCriteria>())).Throws(new InvalidOperationException("DB error"));
 
             var service = new ExportService(repositoryMock.Object);
 
-            var (count, error) = await service.ExportAsync(new FilterCriteria(), "test.xlsx",
-                (_, _) => { });
+            var (count, error) = await service.ExportAsync(new FilterCriteria(), "test.xlsx", (_, _) => { });
 
             Assert.Equal(0, count);
             Assert.Contains("Ошибка экспорта", error);
