@@ -27,23 +27,28 @@ namespace WpfApp3.Tests
                 new Person { Id = 1, FirstName = "John" },
                 new Person { Id = 2, FirstName = "Jane" }
             };
-            repositoryMock.Setup(repository => repository.GetTotalCount(It.IsAny<FilterCriteria>())).Returns(persons.Count);
-            repositoryMock.Setup(repository => repository.GetFilteredStream(It.IsAny<FilterCriteria>())).Returns(persons);
+
+            repositoryMock.Setup(repository => repository.GetTotalCountAsync(It.IsAny<FilterCriteria>())).ReturnsAsync(persons.Count);
+            repositoryMock.Setup(repository => repository.GetFilteredStreamAsync(It.IsAny<FilterCriteria>())).Returns(persons.ToAsyncEnumerable());
 
             var service = new ExportService(repositoryMock.Object);
             bool exportCalled = false;
 
-            var (count, error) = await service.ExportAsync(new FilterCriteria(), "test.xlsx", (data, path) =>
+            var (count, error) = await service.ExportAsync(
+                new FilterCriteria(),
+                "test.xlsx",
+                async (data, path) =>
                 {
                     exportCalled = true;
-                    Assert.Equal(2, data.Count());
+                    var list = await data.ToListAsync();
+                    Assert.Equal(2, list.Count);
                 });
 
             Assert.Null(error);
             Assert.Equal(2, count);
             Assert.True(exportCalled);
-            repositoryMock.Verify(repository => repository.GetTotalCount(It.IsAny<FilterCriteria>()), Times.Once);
-            repositoryMock.Verify(repository => repository.GetFilteredStream(It.IsAny<FilterCriteria>()), Times.Once);
+            repositoryMock.Verify(repository => repository.GetTotalCountAsync(It.IsAny<FilterCriteria>()), Times.Once);
+            repositoryMock.Verify(repository => repository.GetFilteredStreamAsync(It.IsAny<FilterCriteria>()), Times.Once);
         }
 
         /// <summary>
@@ -53,18 +58,25 @@ namespace WpfApp3.Tests
         public async Task ExportWithNoDataReturnsErrorAndDoesNotExport()
         {
             var repositoryMock = new Mock<PersonManager>();
-            repositoryMock.Setup(repository => repository.GetTotalCount(It.IsAny<FilterCriteria>())).Returns(0);
+            repositoryMock.Setup(repository => repository.GetTotalCountAsync(It.IsAny<FilterCriteria>())).ReturnsAsync(0);
 
             var service = new ExportService(repositoryMock.Object);
             bool exportCalled = false;
 
-            var (count, error) = await service.ExportAsync(new FilterCriteria(), "test.xlsx", (_, _) => exportCalled = true);
+            var (count, error) = await service.ExportAsync(
+                new FilterCriteria(),
+                "test.xlsx",
+                (_, _) =>
+                {
+                    exportCalled = true;
+                    return Task.CompletedTask;
+                });
 
             Assert.Equal(0, count);
             Assert.Equal("Нет данных для экспорта с выбранными фильтрами.", error);
             Assert.False(exportCalled);
-            repositoryMock.Verify(repository => repository.GetTotalCount(It.IsAny<FilterCriteria>()), Times.Once);
-            repositoryMock.Verify(repository => repository.GetFilteredStream(It.IsAny<FilterCriteria>()), Times.Never);
+            repositoryMock.Verify(repository => repository.GetTotalCountAsync(It.IsAny<FilterCriteria>()), Times.Once);
+            repositoryMock.Verify(repository => repository.GetFilteredStreamAsync(It.IsAny<FilterCriteria>()), Times.Never);
         }
 
         /// <summary>
@@ -74,11 +86,14 @@ namespace WpfApp3.Tests
         public async Task ExportWhenRepositoryThrows()
         {
             var repositoryMock = new Mock<PersonManager>();
-            repositoryMock.Setup(repository => repository.GetTotalCount(It.IsAny<FilterCriteria>())).Throws(new InvalidOperationException("DB error"));
+            repositoryMock.Setup(repository => repository.GetTotalCountAsync(It.IsAny<FilterCriteria>())).ThrowsAsync(new InvalidOperationException("DB error"));
 
             var service = new ExportService(repositoryMock.Object);
 
-            var (count, error) = await service.ExportAsync(new FilterCriteria(), "test.xlsx", (_, _) => { });
+            var (count, error) = await service.ExportAsync(
+                new FilterCriteria(),
+                "test.xlsx",
+                (_, _) => Task.CompletedTask);
 
             Assert.Equal(0, count);
             Assert.Contains("Ошибка экспорта", error);

@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using WpfApp3.Models;
 using WpfApp3.Services;
 using Xunit;
@@ -15,16 +18,22 @@ namespace WpfApp3.Tests
         /// Проверяет, что экспорт данных создаёт непустой Excel-файл.
         /// </summary>
         [Fact]
-        public void ExportExcelWithSomeData()
+        public async Task ExportExcelWithSomeData()
         {
             var exporter = new ExcelExporter();
             var persons = new List<Person>
             {
-                new Person { Id = 1, FirstName = "John", LastName = "Doe", Date = new System.DateTime(2020, 1, 1) }
+                new Person
+                {
+                    Id = 1,
+                    FirstName = "John",
+                    LastName = "Doe",
+                    Date = new DateTime(2020, 1, 1)
+                }
             };
-            var tempFile = Path.GetTempFileName() + ".xlsx";
+            var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".xlsx");
 
-            exporter.Export(persons, tempFile);
+            await exporter.ExportAsync(persons.ToAsyncEnumerable(), tempFile);
 
             Assert.True(File.Exists(tempFile));
             Assert.True(new FileInfo(tempFile).Length > 0);
@@ -36,12 +45,12 @@ namespace WpfApp3.Tests
         /// Проверяет, что экспорт пустого списка создаёт Excel-файл только с заголовками.
         /// </summary>
         [Fact]
-        public void ExportExcelWithEmptyList()
+        public async Task ExportExcelWithEmptyList()
         {
             var exporter = new ExcelExporter();
-            var tempFile = Path.GetTempFileName() + ".xlsx";
+            var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".xlsx");
 
-            exporter.Export(new List<Person>(), tempFile);
+            await exporter.ExportAsync(AsyncEnumerable.Empty<Person>(), tempFile);
 
             Assert.True(File.Exists(tempFile));
             Assert.True(new FileInfo(tempFile).Length > 0);

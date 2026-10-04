@@ -1,0 +1,10 @@
+﻿{
+  "Database": {
+    "Server": "localhost,1433",
+    "Database": "CsvToDb",
+    "UserId": "sa",
+    "Password": "YourStrong!Passw0rd",
+    "TrustServerCertificate": true,
+    "ConnectTimeout": 5
+  }
+}

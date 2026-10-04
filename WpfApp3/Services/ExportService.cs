@@ -7,7 +7,7 @@ using WpfApp3.Helpers;
 namespace WpfApp3.Services
 {
     /// <summary>
-    /// Сервис для экспорта отфильтрованных данных в файл (Excel, XML и т.д.).
+    /// Сервис для экспорта отфильтрованных данных. Работает потоково, не загружая данные в память.
     /// </summary>
     public class ExportService
     {
@@ -23,38 +23,37 @@ namespace WpfApp3.Services
         }
 
         /// <summary>
-        /// Асинхронно экспортирует данные, отфильтрованные по критериям, с помощью переданного действия.
-        /// Данные передаются потоково, без загрузки всего набора в память.
+        /// экспортирует данные, отфильтрованные по критериям, с помощью переданного действия.
         /// </summary>
         /// <param name="criteria">Критерии фильтрации.</param>
         /// <param name="filePath">Путь к файлу для экспорта.</param>
-        /// <param name="exportAction">Действие, выполняющее фактическую запись данных в файл (принимает IEnumerable&lt;Person&gt;).</param>
-        /// <returns>Кортеж: количество экспортированных записей и сообщение об ошибке (null, если успешно).</returns>
+        /// <param name="exportAction">Асинхронное действие записи данных в файл.</param>
+        /// <returns>Кортеж: количество экспортированных записей и сообщение об ошибке.</returns>
         public async Task<(int count, string? error)> ExportAsync(
             FilterCriteria criteria,
             string filePath,
-            Action<IEnumerable<Person>, string> exportAction)
+            Func<IAsyncEnumerable<Person>, string, Task> exportAction)
         {
-            Logger.Info($"Export started to {filePath}");
+            Logger.Info($"Начало экспорта в {filePath}");
 
             try
             {
-                var totalCount = _repository.GetTotalCount(criteria);
+                var totalCount = await _repository.GetTotalCountAsync(criteria).ConfigureAwait(false);
                 if (totalCount == 0)
                 {
-                    Logger.Warning("No data to export with the current filters.");
+                    Logger.Warning("Нет данных для экспорта по заданным фильтрам.");
                     return (0, "Нет данных для экспорта с выбранными фильтрами.");
                 }
 
-                var dataStream = _repository.GetFilteredStream(criteria);
-                await Task.Run(() => exportAction(dataStream, filePath));
+                var dataStream = _repository.GetFilteredStreamAsync(criteria);
+                await exportAction(dataStream, filePath).ConfigureAwait(false);
 
-                Logger.Info($"Export completed. {totalCount} records exported.");
+                Logger.Info($"Экспорт завершён. Экспортировано {totalCount} записей.");
                 return (totalCount, null);
             }
             catch (Exception exception)
             {
-                Logger.Error(exception, "Export error");
+                Logger.Error(exception, "Ошибка экспорта");
                 return (0, $"Ошибка экспорта: {exception.Message}");
             }
         }

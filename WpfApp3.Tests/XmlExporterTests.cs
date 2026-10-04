@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using WpfApp3.Models;
 using WpfApp3.Services;
@@ -16,10 +18,10 @@ namespace WpfApp3.Tests
         /// Проверяет, что экспорт данных создаёт XML-файл с правильной структурой и содержимым.
         /// </summary>
         [Fact]
-        public void ExportXmlWithValidData()
+        public async Task ExportXmlWithValidData()
         {
             var exporter = new XmlExporter();
-            var persons = new List<Person>
+            var persons = new[]
             {
                 new Person
                 {
@@ -29,12 +31,12 @@ namespace WpfApp3.Tests
                     MiddleName = "M",
                     City = "NY",
                     Country = "USA",
-                    Date = new System.DateTime(2020, 1, 1)
+                    Date = new DateTime(2020, 1, 1)
                 }
             };
-            var tempFile = Path.GetTempFileName() + ".xml";
+            var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".xml");
 
-            exporter.Export(persons, tempFile);
+            await exporter.ExportAsync(persons.ToAsyncEnumerable(), tempFile);
 
             Assert.True(File.Exists(tempFile));
             var document = XDocument.Load(tempFile);
@@ -59,12 +61,12 @@ namespace WpfApp3.Tests
         /// Проверяет, что экспорт пустого набора данных создаёт XML-файл с пустым блоком Records.
         /// </summary>
         [Fact]
-        public void ExportEmptyXmlCreatesEmptyRecords()
+        public async Task ExportEmptyXmlCreatesEmptyRecords()
         {
             var exporter = new XmlExporter();
-            var tempFile = Path.GetTempFileName() + ".xml";
+            var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".xml");
 
-            exporter.Export(new List<Person>(), tempFile);
+            await exporter.ExportAsync(AsyncEnumerable.Empty<Person>(), tempFile);
 
             Assert.True(File.Exists(tempFile));
             var document = XDocument.Load(tempFile);

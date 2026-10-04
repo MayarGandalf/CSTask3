@@ -1,50 +1,45 @@
-﻿using System.Collections.Generic;
+﻿using System.Threading.Tasks;
 using System.Xml;
 using WpfApp3.Models;
 
 namespace WpfApp3.Services
 {
     /// <summary>
-    /// Экспорт данных в XML-файл.
+    /// Экспорт данных в XML-файл. Работает потоково через XmlWriter.
     /// </summary>
     public class XmlExporter
     {
-        /// <summary>
-        /// Сохраняет перечисление Person в XML-файл по указанному пути.
-        /// Использует потоковую запись для работы с большими объёмами данных.
-        /// </summary>
-        /// <param name="data">Данные для экспорта.</param>
-        /// <param name="filePath">Путь к выходному файлу.</param>
-        public void Export(IEnumerable<Person> data, string filePath)
+        public async Task ExportAsync(IAsyncEnumerable<Person> data, string filePath)
         {
             var settings = new XmlWriterSettings
             {
                 Indent = true,
-                IndentChars = "  "
+                IndentChars = "  ",
+                Async = true
             };
 
-            using var writer = XmlWriter.Create(filePath, settings);
-            writer.WriteStartDocument();
-            writer.WriteStartElement("Persons");
-            writer.WriteStartElement("Records");
+            await using var writer = XmlWriter.Create(filePath, settings);
+            await writer.WriteStartDocumentAsync().ConfigureAwait(false);
+            await writer.WriteStartElementAsync(null, "Persons", null).ConfigureAwait(false);
+            await writer.WriteStartElementAsync(null, "Records", null).ConfigureAwait(false);
 
-            foreach (var person in data)
+            await foreach (var person in data.ConfigureAwait(false))
             {
-                writer.WriteStartElement("Person");
-                writer.WriteElementString("Id", person.Id.ToString());
-                writer.WriteElementString("Date", person.Date.ToString("yyyy-MM-dd"));
-                writer.WriteElementString("FirstName", person.FirstName ?? string.Empty);
-                writer.WriteElementString("LastName", person.LastName ?? string.Empty);
-                writer.WriteElementString("MiddleName", person.MiddleName ?? string.Empty);
-                writer.WriteElementString("City", person.City ?? string.Empty);
-                writer.WriteElementString("Country", person.Country ?? string.Empty);
-                writer.WriteEndElement(); // Person
+                await writer.WriteStartElementAsync(null, "Person", null).ConfigureAwait(false);
+                await writer.WriteElementStringAsync(null, "Id", null, person.Id.ToString()).ConfigureAwait(false);
+                await writer.WriteElementStringAsync(null, "Date", null, person.Date.ToString("yyyy-MM-dd")).ConfigureAwait(false);
+                await writer.WriteElementStringAsync(null, "FirstName", null, person.FirstName ?? string.Empty).ConfigureAwait(false);
+                await writer.WriteElementStringAsync(null, "LastName", null, person.LastName ?? string.Empty).ConfigureAwait(false);
+                await writer.WriteElementStringAsync(null, "MiddleName", null, person.MiddleName ?? string.Empty).ConfigureAwait(false);
+                await writer.WriteElementStringAsync(null, "City", null, person.City ?? string.Empty).ConfigureAwait(false);
+                await writer.WriteElementStringAsync(null, "Country", null, person.Country ?? string.Empty).ConfigureAwait(false);
+                await writer.WriteEndElementAsync().ConfigureAwait(false);
             }
 
-            writer.WriteEndElement(); // Records
-            writer.WriteEndElement(); // Persons
-            writer.WriteEndDocument();
-            writer.Flush();
+            await writer.WriteEndElementAsync().ConfigureAwait(false);
+            await writer.WriteEndElementAsync().ConfigureAwait(false);
+            await writer.WriteEndDocumentAsync().ConfigureAwait(false);
+            await writer.FlushAsync().ConfigureAwait(false);
         }
     }
 }

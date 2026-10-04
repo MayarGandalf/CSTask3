@@ -52,7 +52,6 @@ namespace WpfApp3.Tests
 
             var service = new ImportService(importerMock.Object, repositoryMock.Object);
             var (count, error) = await service.ImportAsync("test.csv");
-
             Assert.Equal(0, count);
             Assert.Equal("Не найдено корректных данных.", error);
             repositoryMock.Verify(repository => repository.AddForBulkAsync(It.IsAny<Person>()), Times.Never);

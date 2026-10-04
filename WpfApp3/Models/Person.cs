@@ -6,10 +6,10 @@ namespace WpfApp3.Models
     /// <summary>
     /// Представляет запись о человеке, загруженную из CSV-файла.
     /// </summary>
-    public class Person
+    public record Person
     {
         /// <summary>
-        /// Уникальный идентификатор записи (автоинкремент).
+        /// Уникальный идентификатор записи.
         /// </summary>
         public int Id { get; set; }
 

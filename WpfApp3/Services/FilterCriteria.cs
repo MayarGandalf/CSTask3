@@ -3,9 +3,9 @@
 namespace WpfApp3.Services
 {
     /// <summary>
-    /// Класс-контейнер для критериев фильтрации записей Person.
+    /// Критерии фильтрации записей Person.
     /// </summary>
-    public class FilterCriteria
+    public record FilterCriteria
     {
         /// <summary>Фильтр по идентификатору (точное совпадение).</summary>
         public int? Id { get; set; }

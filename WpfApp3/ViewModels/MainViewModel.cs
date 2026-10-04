@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
@@ -245,7 +246,7 @@ namespace WpfApp3.ViewModels
 
         /// <summary>
         /// Асинхронно загружает текущую страницу данных с учётом фильтра.
-        /// Обновляет коллекцию <see cref="Persons"/> и счётчики пагинации.
+        /// Запросы к БД выполняются асинхронно, не блокируя UI-поток.
         /// </summary>
         private async Task LoadPageAsync()
         {
@@ -255,10 +256,12 @@ namespace WpfApp3.ViewModels
             try
             {
                 var criteria = BuildCriteria();
-                var dataTask = Task.Run(() => _repository.GetPaged(_pagination.Skip, _pagination.PageSize, criteria));
-                var totalTask = Task.Run(() => _repository.GetTotalCount(criteria));
+
+                var dataTask = _repository.GetPagedAsync(_pagination.Skip, _pagination.PageSize, criteria);
+                var totalTask = _repository.GetTotalCountAsync(criteria);
 
                 await Task.WhenAll(dataTask, totalTask);
+
                 var data = await dataTask;
                 var total = await totalTask;
 
@@ -351,31 +354,39 @@ namespace WpfApp3.ViewModels
         /// <summary>
         /// Запускает экспорт в Excel через диалог сохранения файла.
         /// </summary>
-        private void ExecuteExportExcel() => ExportData("xlsx", "Excel files", _excelExporter.Export);
+        private void ExecuteExportExcel() =>
+            _ = ExportDataAsync("xlsx", "Excel files", _excelExporter.ExportAsync);
 
         /// <summary>
         /// Запускает экспорт в XML через диалог сохранения файла.
         /// </summary>
-        private void ExecuteExportXml() => ExportData("xml", "XML files", _xmlExporter.Export);
+        private void ExecuteExportXml() =>
+            _ = ExportDataAsync("xml", "XML files", _xmlExporter.ExportAsync);
 
         /// <summary>
         /// Обобщённый метод экспорта данных с выбором формата.
+        /// Использует асинхронную потоковую передачу данных без загрузки в память.
         /// </summary>
         /// <param name="extension">Расширение файла.</param>
         /// <param name="filterDescription">Описание фильтра для диалога сохранения.</param>
-        /// <param name="exportAction">Делегат, выполняющий фактический экспорт.</param>
-        private async void ExportData(string extension, string filterDescription, Action<IEnumerable<Person>, string> exportAction)
+        /// <param name="exportAction">Асинхронный делегат, выполняющий фактический экспорт.</param>
+        private async Task ExportDataAsync(
+            string extension,
+            string filterDescription,
+            Func<IAsyncEnumerable<Person>, string, Task> exportAction)
         {
             var saveDialog = new SaveFileDialog
             {
                 Filter = $"{filterDescription} (*.{extension})|*.{extension}|All files (*.*)|*.*",
                 DefaultExt = $".{extension}"
             };
-            if (saveDialog.ShowDialog() == true)
-            {
-                IsBusy = true;
-                StatusText = "Экспорт...";
+            if (saveDialog.ShowDialog() != true) return;
 
+            IsBusy = true;
+            StatusText = "Экспорт...";
+
+            try
+            {
                 var criteria = BuildCriteria();
                 var (count, error) = await _exportService.ExportAsync(criteria, saveDialog.FileName, exportAction);
 
@@ -386,6 +397,9 @@ namespace WpfApp3.ViewModels
                     MessageBox.Show(error, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     StatusText = "❌ Ошибка экспорта.";
                 }
+            }
+            finally
+            {
                 IsBusy = false;
             }
         }
