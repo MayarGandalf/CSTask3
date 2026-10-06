@@ -10,8 +10,6 @@ namespace WpfApp3.Services
 {
     /// <summary>
     /// Экспорт данных в файл Excel (XLSX) через OpenXmlWriter.
-    /// Реализована потоковая запись: строки записываются на диск по мере поступления,
-    /// весь набор данных не загружается в память.
     /// </summary>
     public class ExcelExporter
     {
